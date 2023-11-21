@@ -1,23 +1,24 @@
-mutable struct Tricubic
-    const X::AbstractVector{<:Real}
-    const Y::AbstractVector{<:Real}
-    const Z::AbstractVector{<:Real}
-    const F::AbstractArray{<:Real, 3}
-    const ∂F∂X::AbstractArray{<:Real, 3}
-    const ∂F∂Y::AbstractArray{<:Real, 3}
-    const ∂F∂Z::AbstractArray{<:Real, 3}
-    const ∂²F∂X∂Y::AbstractArray{<:Real, 3}
-    const ∂²F∂X∂Z::AbstractArray{<:Real, 3}
-    const ∂²F∂Y∂Z::AbstractArray{<:Real, 3}
-    const ∂³F∂X∂Y∂Z::AbstractArray{<:Real, 3}
+mutable struct Tricubic{V₁<:AbstractVector, V₂<:AbstractVector,
+                        V₃<:AbstractVector, A<:AbstractArray}
+    const X::V₁
+    const Y::V₂
+    const Z::V₃
+    const F::A
+    const ∂F∂X::A
+    const ∂F∂Y::A
+    const ∂F∂Z::A
+    const ∂²F∂X∂Y::A
+    const ∂²F∂X∂Z::A
+    const ∂²F∂Y∂Z::A
+    const ∂³F∂X∂Y∂Z::A
     initialised::Bool
-    Xᵢ::Real
-    Xᵢ₊₁::Real
-    Yⱼ::Real
-    Yⱼ₊₁::Real
-    Zₖ::Real
-    Zₖ₊₁::Real
-    α::Vector{<:Real}
+    Xᵢ::Float64
+    Xᵢ₊₁::Float64
+    Yⱼ::Float64
+    Yⱼ₊₁::Float64
+    Zₖ::Float64
+    Zₖ₊₁::Float64
+    α::Vector{Float64}
 
     function Tricubic(X, Y, Z, F)
         ∂F∂X = build_∂F∂X(F, X)
@@ -35,8 +36,10 @@ mutable struct Tricubic
         Zₖ = 0.0
         Zₖ₊₁ = 0.0
         α = zeros(64)
-        new(X, Y, Z, F, ∂F∂X, ∂F∂Y, ∂F∂Z, ∂²F∂X∂Y, ∂²F∂X∂Z, ∂²F∂Y∂Z, ∂³F∂X∂Y∂Z,
-            initialised, Xᵢ, Xᵢ₊₁, Yⱼ, Yⱼ₊₁, Zₖ, Zₖ₊₁, α)
+        new{typeof(X), typeof(Y), typeof(Z), typeof(F)}(
+                X, Y, Z, F, ∂F∂X, ∂F∂Y, ∂F∂Z,
+                ∂²F∂X∂Y, ∂²F∂X∂Z, ∂²F∂Y∂Z, ∂³F∂X∂Y∂Z,
+                initialised, Xᵢ, Xᵢ₊₁, Yⱼ, Yⱼ₊₁, Zₖ, Zₖ₊₁, α)
     end
 end
 
@@ -194,4 +197,19 @@ function partial_derivative_z(tricubic::Tricubic, x, y, z)
         end
     end
     ∂f∂z
+end
+
+function Base.show(io::IO, mime::MIME"text/plain", tricubic::Tricubic)
+    println(io, "Tricubic interpolator")
+    print(io, "X: ")
+    show(io, mime, tricubic.X)
+    println(io)
+    print(io, "Y: ")
+    show(io, mime, tricubic.Y)
+    println(io)
+    print(io, "Z: ")
+    show(io, mime, tricubic.Z)
+    println(io)
+    i, j, k = size(tricubic.F)
+    print(io, "F: $(i)x$(j)x$(k) ", typeof(tricubic.F))
 end
