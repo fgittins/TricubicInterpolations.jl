@@ -17,7 +17,6 @@ mutable struct Tricubic{V₁<:AbstractVector, V₂<:AbstractVector,
     const Ymax::Float64
     const Zmin::Float64
     const Zmax::Float64
-    initialised::Bool
     Xᵢ::Float64
     Xᵢ₊₁::Float64
     Yⱼ::Float64
@@ -40,7 +39,6 @@ mutable struct Tricubic{V₁<:AbstractVector, V₂<:AbstractVector,
         Ymax = maximum(Y)
         Zmin = minimum(Z)
         Zmax = maximum(Z)
-        initialised = false
         Xᵢ = 0.0
         Xᵢ₊₁ = 0.0
         Yⱼ = 0.0
@@ -52,31 +50,15 @@ mutable struct Tricubic{V₁<:AbstractVector, V₂<:AbstractVector,
                 X, Y, Z, F, ∂F∂X, ∂F∂Y, ∂F∂Z,
                 ∂²F∂X∂Y, ∂²F∂X∂Z, ∂²F∂Y∂Z, ∂³F∂X∂Y∂Z,
                 Xmin, Xmax, Ymin, Ymax, Zmin, Zmax,
-                initialised, Xᵢ, Xᵢ₊₁, Yⱼ, Yⱼ₊₁, Zₖ, Zₖ₊₁, α)
+                Xᵢ, Xᵢ₊₁, Yⱼ, Yⱼ₊₁, Zₖ, Zₖ₊₁, α)
     end
 end
 
 "Calculate aspects of cube at `(x, y, z)` for interpolation."
 function calculate_cube(tricubic::Tricubic, x, y, z)
-    i = j = k = 1
-    for I = 1:length(tricubic.X)
-        if tricubic.X[I] ≥ x
-            i = I
-            break
-        end
-    end
-    for J = 1:length(tricubic.Y)
-        if tricubic.Y[J] ≥ y
-            j = J
-            break
-        end
-    end
-    for K = 1:length(tricubic.Z)
-        if tricubic.Z[K] ≥ z
-            k = K
-            break
-        end
-    end
+    i = findfirst(a -> a ≥ x, tricubic.X)
+    j = findfirst(a -> a ≥ y, tricubic.Y)
+    k = findfirst(a -> a ≥ z, tricubic.Z)
     if i ≠ 1
         i -= 1
     end
@@ -92,8 +74,6 @@ function calculate_cube(tricubic::Tricubic, x, y, z)
             tricubic.F, tricubic.∂F∂X, tricubic.∂F∂Y, tricubic.∂F∂Z,
             tricubic.∂²F∂X∂Y, tricubic.∂²F∂X∂Z, tricubic.∂²F∂Y∂Z,
             tricubic.∂³F∂X∂Y∂Z)
-
-    tricubic.initialised = true
 
     tricubic.Xᵢ, tricubic.Xᵢ₊₁ = tricubic.X[i], tricubic.X[i + 1]
     tricubic.Yⱼ, tricubic.Yⱼ₊₁ = tricubic.Y[j], tricubic.Y[j + 1]
@@ -113,9 +93,8 @@ end
 "Tricubic interpolator."
 function (tricubic::Tricubic)(x, y, z)
     check_extrapolate(tricubic, x, y, z)
-    if (!tricubic.initialised || !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁
-                                   && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
-                                   && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁))
+    if !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁ && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
+         && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁)
         calculate_cube(tricubic, x, y, z)
     end
 
@@ -141,9 +120,8 @@ end
 
 function partial_derivative_x(tricubic::Tricubic, x, y, z)
     check_extrapolate(tricubic, x, y, z)
-    if (!tricubic.initialised || !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁
-                                   && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
-                                   && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁))
+    if !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁ && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
+         && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁)
         calculate_cube(tricubic, x, y, z)
     end
 
@@ -170,9 +148,8 @@ end
 
 function partial_derivative_y(tricubic::Tricubic, x, y, z)
     check_extrapolate(tricubic, x, y, z)
-    if (!tricubic.initialised || !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁
-                                   && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
-                                   && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁))
+    if !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁ && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
+         && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁)
         calculate_cube(tricubic, x, y, z)
     end
 
@@ -199,9 +176,8 @@ end
 
 function partial_derivative_z(tricubic::Tricubic, x, y, z)
     check_extrapolate(tricubic, x, y, z)
-    if (!tricubic.initialised || !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁
-                                   && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
-                                   && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁))
+    if !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁ && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
+         && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁)
         calculate_cube(tricubic, x, y, z)
     end
 
