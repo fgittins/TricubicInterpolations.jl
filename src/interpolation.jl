@@ -46,6 +46,7 @@ mutable struct Tricubic{V₁<:AbstractVector, V₂<:AbstractVector,
         Zₖ = 0.0
         Zₖ₊₁ = 0.0
         α = zeros(64)
+
         new{typeof(X), typeof(Y), typeof(Z), typeof(F)}(
                 X, Y, Z, F, ∂F∂X, ∂F∂Y, ∂F∂Z,
                 ∂²F∂X∂Y, ∂²F∂X∂Z, ∂²F∂Y∂Z, ∂³F∂X∂Y∂Z,
