@@ -26,13 +26,21 @@ mutable struct Tricubic{V₁<:AbstractVector, V₂<:AbstractVector,
     α::Vector{Float64}
 
     function Tricubic(X, Y, Z, F)
-        ∂F∂X = build_∂F∂X(F, X)
-        ∂F∂Y = build_∂F∂Y(F, Y)
-        ∂F∂Z = build_∂F∂Z(F, Z)
-        ∂²F∂X∂Y = build_∂F∂X(∂F∂Y, X)
-        ∂²F∂X∂Z = build_∂F∂X(∂F∂Z, X)
-        ∂²F∂Y∂Z = build_∂F∂Y(∂F∂Z, Y)
-        ∂³F∂X∂Y∂Z = build_∂F∂X(∂²F∂Y∂Z, X)
+        dims = size(F)
+        ∂F∂X = zeros(dims)
+        calculate_∂F∂X!(∂F∂X, F, X)
+        ∂F∂Y = zeros(dims)
+        calculate_∂F∂Y!(∂F∂Y, F, X)
+        ∂F∂Z = zeros(dims)
+        calculate_∂F∂Z!(∂F∂Z, F, X)
+        ∂²F∂X∂Y = zeros(dims)
+        calculate_∂F∂X!(∂²F∂X∂Y, ∂F∂Y, X)
+        ∂²F∂X∂Z = zeros(dims)
+        calculate_∂F∂X!(∂²F∂X∂Z, ∂F∂Z, X)
+        ∂²F∂Y∂Z = zeros(dims)
+        calculate_∂F∂Y!(∂²F∂Y∂Z, ∂F∂Z, Y)
+        ∂³F∂X∂Y∂Z = zeros(dims)
+        calculate_∂F∂X!(∂³F∂X∂Y∂Z, ∂²F∂Y∂Z, X)
         Xmin = minimum(X)
         Xmax = maximum(X)
         Ymin = minimum(Y)
@@ -56,7 +64,7 @@ mutable struct Tricubic{V₁<:AbstractVector, V₂<:AbstractVector,
 end
 
 "Calculate aspects of cube at `(x, y, z)` for interpolation."
-function calculate_cube(tricubic::Tricubic, x, y, z)
+function calculate_cube!(tricubic::Tricubic, x, y, z)
     i = findfirst(a -> a ≥ x, tricubic.X)
     j = findfirst(a -> a ≥ y, tricubic.Y)
     k = findfirst(a -> a ≥ z, tricubic.Z)
@@ -70,8 +78,8 @@ function calculate_cube(tricubic::Tricubic, x, y, z)
         k -= 1
     end
 
-    tricubic.α = calculate_coefficients(
-            i, j, k, tricubic.X, tricubic.Y, tricubic.Z,
+    calculate_coefficients!(
+            tricubic.α, i, j, k, tricubic.X, tricubic.Y, tricubic.Z,
             tricubic.F, tricubic.∂F∂X, tricubic.∂F∂Y, tricubic.∂F∂Z,
             tricubic.∂²F∂X∂Y, tricubic.∂²F∂X∂Z, tricubic.∂²F∂Y∂Z,
             tricubic.∂³F∂X∂Y∂Z)
@@ -79,32 +87,23 @@ function calculate_cube(tricubic::Tricubic, x, y, z)
     tricubic.Xᵢ, tricubic.Xᵢ₊₁ = tricubic.X[i], tricubic.X[i + 1]
     tricubic.Yⱼ, tricubic.Yⱼ₊₁ = tricubic.Y[j], tricubic.Y[j + 1]
     tricubic.Zₖ, tricubic.Zₖ₊₁ = tricubic.Z[k], tricubic.Z[k + 1]
-end
 
-function check_extrapolate(tricubic::Tricubic, x, y, z)
-    if x < tricubic.Xmin || tricubic.Xmax < x
-        error("interpolator only accepts inputs that lie in `X` grid")
-    elseif y < tricubic.Ymin || tricubic.Ymax < y
-        error("interpolator only accepts inputs that lie in `Y` grid")
-    elseif z < tricubic.Zmin || tricubic.Zmax < z
-        error("interpolator only accepts inputs that lie in `Z` grid")
-    end
+    nothing
 end
 
 "Tricubic interpolator."
 function (tricubic::Tricubic)(x, y, z)
-    check_extrapolate(tricubic, x, y, z)
     if !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁ && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
          && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁)
-        calculate_cube(tricubic, x, y, z)
+        calculate_cube!(tricubic, x, y, z)
     end
 
     ξ = (x - tricubic.Xᵢ)/(tricubic.Xᵢ₊₁ - tricubic.Xᵢ)
     η = (y - tricubic.Yⱼ)/(tricubic.Yⱼ₊₁ - tricubic.Yⱼ)
     ζ = (z - tricubic.Zₖ)/(tricubic.Zₖ₊₁ - tricubic.Zₖ)
 
-    ηarray = (1, η, η^2, η^3)
-    ζarray = (1, ζ, ζ^2, ζ^3)
+    ηarray = SA[1, η, η^2, η^3]
+    ζarray = SA[1, ζ, ζ^2, ζ^3]
 
     f = 0.0
     for c = 1:4
@@ -120,18 +119,17 @@ function (tricubic::Tricubic)(x, y, z)
 end
 
 function partial_derivative_x(tricubic::Tricubic, x, y, z)
-    check_extrapolate(tricubic, x, y, z)
     if !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁ && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
          && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁)
-        calculate_cube(tricubic, x, y, z)
+        calculate_cube!(tricubic, x, y, z)
     end
 
     ξ = (x - tricubic.Xᵢ)/(tricubic.Xᵢ₊₁ - tricubic.Xᵢ)
     η = (y - tricubic.Yⱼ)/(tricubic.Yⱼ₊₁ - tricubic.Yⱼ)
     ζ = (z - tricubic.Zₖ)/(tricubic.Zₖ₊₁ - tricubic.Zₖ)
 
-    ξarray = (1, ξ, ξ^2)
-    ζarray = (1, ζ, ζ^2, ζ^3)
+    ξarray = SA[1, ξ, ξ^2]
+    ζarray = SA[1, ζ, ζ^2, ζ^3]
 
     ∂f∂x = 0.0
     for a = 2:4
@@ -148,18 +146,17 @@ function partial_derivative_x(tricubic::Tricubic, x, y, z)
 end
 
 function partial_derivative_y(tricubic::Tricubic, x, y, z)
-    check_extrapolate(tricubic, x, y, z)
     if !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁ && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
          && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁)
-        calculate_cube(tricubic, x, y, z)
+        calculate_cube!(tricubic, x, y, z)
     end
 
     ξ = (x - tricubic.Xᵢ)/(tricubic.Xᵢ₊₁ - tricubic.Xᵢ)
     η = (y - tricubic.Yⱼ)/(tricubic.Yⱼ₊₁ - tricubic.Yⱼ)
     ζ = (z - tricubic.Zₖ)/(tricubic.Zₖ₊₁ - tricubic.Zₖ)
 
-    ηarray = (1, η, η^2)
-    ζarray = (1, ζ, ζ^2, ζ^3)
+    ηarray = SA[1, η, η^2]
+    ζarray = SA[1, ζ, ζ^2, ζ^3]
 
     ∂f∂y = 0.0
     for c = 2:4
@@ -176,18 +173,17 @@ function partial_derivative_y(tricubic::Tricubic, x, y, z)
 end
 
 function partial_derivative_z(tricubic::Tricubic, x, y, z)
-    check_extrapolate(tricubic, x, y, z)
     if !(tricubic.Xᵢ ≤ x < tricubic.Xᵢ₊₁ && tricubic.Yⱼ ≤ y < tricubic.Yⱼ₊₁
          && tricubic.Zₖ ≤ z < tricubic.Zₖ₊₁)
-        calculate_cube(tricubic, x, y, z)
+        calculate_cube!(tricubic, x, y, z)
     end
 
     ξ = (x - tricubic.Xᵢ)/(tricubic.Xᵢ₊₁ - tricubic.Xᵢ)
     η = (y - tricubic.Yⱼ)/(tricubic.Yⱼ₊₁ - tricubic.Yⱼ)
     ζ = (z - tricubic.Zₖ)/(tricubic.Zₖ₊₁ - tricubic.Zₖ)
 
-    ηarray = (1, η, η^2, η^3)
-    ζarray = (1, ζ, ζ^2)
+    ηarray = SA[1, η, η^2, η^3]
+    ζarray = SA[1, ζ, ζ^2]
 
     ∂f∂z = 0.0
     for c = 1:4

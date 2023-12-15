@@ -1,5 +1,7 @@
 module TricubicInterpolations
 
+using StaticArrays
+
 export Tricubic
 export partial_derivative_x, partial_derivative_y, partial_derivative_z
 
