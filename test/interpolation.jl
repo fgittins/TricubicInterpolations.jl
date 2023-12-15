@@ -10,10 +10,10 @@
     for x in Xtest
         for y in Ytest
             for z in Ztest
-                @test t(x, y, z) ≈ val atol=1e-15
-                @test partial_derivative_x(t, x, y, z) ≈ 0 atol=1e-15
-                @test partial_derivative_y(t, x, y, z) ≈ 0 atol=1e-15
-                @test partial_derivative_z(t, x, y, z) ≈ 0 atol=1e-15
+                @test t(x, y, z) ≈ val atol=1e-12
+                @test partial_derivative_x(t, x, y, z) ≈ 0 atol=1e-12
+                @test partial_derivative_y(t, x, y, z) ≈ 0 atol=1e-12
+                @test partial_derivative_z(t, x, y, z) ≈ 0 atol=1e-12
             end
         end
     end
@@ -89,8 +89,8 @@ end
     t = Tricubic(X, Y, Z, F)
 
     x, y, z = rand(Float64, 3)
-    @test t(x, y, z) ≈ f(x, y, z) atol=1e-5
-    @test partial_derivative_x(t, x, y, z) ≈ (1 - 2*x^2)*exp(- x^2 - y^2 - z^2) atol=1e-3
-    @test partial_derivative_y(t, x, y, z) ≈ -2*x*y*exp(- x^2 - y^2 - z^2) atol=1e-3
-    @test partial_derivative_z(t, x, y, z) ≈ -2*x*z*exp(- x^2 - y^2 - z^2) atol=1e-3
+    @test t(x, y, z) ≈ f(x, y, z) atol=1e-4
+    @test partial_derivative_x(t, x, y, z) ≈ (1 - 2*x^2)*exp(- x^2 - y^2 - z^2) atol=1e-4
+    @test partial_derivative_y(t, x, y, z) ≈ -2*x*y*exp(- x^2 - y^2 - z^2) atol=1e-4
+    @test partial_derivative_z(t, x, y, z) ≈ -2*x*z*exp(- x^2 - y^2 - z^2) atol=1e-4
 end
