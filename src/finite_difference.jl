@@ -25,7 +25,7 @@ function calculate_∂F∂X!(∂F∂X, F, X)
                                  / (25*X[end - 4] - 48*X[end - 3]
                                     + 36*X[end - 2] - 16*X[end - 1] 
                                     + 3*X[end]))
-    nothing
+   ∂F∂X
 end
 
 "Five-point finite difference for partial derivative with respect to `y`."
@@ -55,7 +55,7 @@ function calculate_∂F∂Y!(∂F∂Y, F, Y)
                                  / (25*Y[end - 4] - 48*Y[end - 3]
                                     + 36*Y[end - 2] - 16*Y[end - 1]
                                     + 3*Y[end]))
-    nothing
+    ∂F∂Y
 end
 
 "Five-point finite difference for partial derivative with respect to `z`."
@@ -85,5 +85,5 @@ function calculate_∂F∂Z!(∂F∂Z, F, Z)
                                  / (25*Z[end - 4] - 48*Z[end - 3]
                                     + 36*Z[end - 2] - 16*Z[end - 1]
                                     + 3*Z[end]))
-    nothing
+    ∂F∂Z
 end

@@ -147,5 +147,4 @@ function calculate_coefficients!(α, i, j, k, X, Y, Z, F, ∂F∂X, ∂F∂Y, �
           *∂³F∂X∂Y∂Z[i + 1, j + 1, k + 1])]
     
     α .= B⁻¹*b
-    nothing
 end

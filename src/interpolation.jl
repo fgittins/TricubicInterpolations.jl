@@ -88,7 +88,8 @@ function calculate_cube!(tricubic::Tricubic, x, y, z)
     tricubic.Yⱼ, tricubic.Yⱼ₊₁ = tricubic.Y[j], tricubic.Y[j + 1]
     tricubic.Zₖ, tricubic.Zₖ₊₁ = tricubic.Z[k], tricubic.Z[k + 1]
 
-    nothing
+    (tricubic.α, tricubic.Xᵢ, tricubic.Xᵢ₊₁, tricubic.Yⱼ, tricubic.Yⱼ₊₁,
+     tricubic.Zₖ, tricubic.Zₖ₊₁)
 end
 
 "Tricubic interpolator."
