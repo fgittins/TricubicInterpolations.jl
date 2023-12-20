@@ -19,6 +19,29 @@
     end
 end
 
+@testset "Constant uneven grid" begin
+    n = 10
+    X = LinRange(0, 1, n - 1)
+    Y = LinRange(0, 1, n)
+    Z = LinRange(0, 1, n + 1)
+    val = rand()
+    F = fill(val, (n - 1, n, n + 1))
+
+    t = Tricubic(X, Y, Z, F)
+
+    Xtest = Ytest = Ztest = LinRange(0, 1, 4*n)
+    for x in Xtest
+        for y in Ytest
+            for z in Ztest
+                @test t(x, y, z) ≈ val atol=1e-12
+                @test partial_derivative_x(t, x, y, z) ≈ 0 atol=1e-12
+                @test partial_derivative_y(t, x, y, z) ≈ 0 atol=1e-12
+                @test partial_derivative_z(t, x, y, z) ≈ 0 atol=1e-12
+            end
+        end
+    end
+end
+
 @testset "Cube corners" begin
     n = 11
     X = Y = Z = LinRange(0, 1, n)
