@@ -65,6 +65,12 @@ end
 
 "Calculate aspects of cube at `(x, y, z)` for interpolation."
 function calculate_cube!(tricubic::Tricubic, x, y, z)
+    if (x < tricubic.Xmin || x > tricubic.Xmax
+        || y < tricubic.Ymin || y > tricubic.Ymax
+        || z < tricubic.Zmin || z > tricubic.Zmax)
+        throw(ArgumentError("(x, y, z) inputs are outside grid"))
+    end
+
     i = findfirst(a -> a ≥ x, tricubic.X)
     j = findfirst(a -> a ≥ y, tricubic.Y)
     k = findfirst(a -> a ≥ z, tricubic.Z)
