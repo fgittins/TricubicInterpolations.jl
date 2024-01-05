@@ -1,5 +1,5 @@
-mutable struct Tricubic{V₁<:AbstractVector, V₂<:AbstractVector,
-                        V₃<:AbstractVector, A<:AbstractArray}
+mutable struct Tricubic{V₁ <: AbstractVector, V₂ <: AbstractVector,
+                        V₃ <: AbstractVector, A <: AbstractArray}
     const X::V₁
     const Y::V₂
     const Z::V₃
@@ -109,8 +109,8 @@ function (tricubic::Tricubic)(x, y, z)
     η = (y - tricubic.Yⱼ)/(tricubic.Yⱼ₊₁ - tricubic.Yⱼ)
     ζ = (z - tricubic.Zₖ)/(tricubic.Zₖ₊₁ - tricubic.Zₖ)
 
-    ηarray = SA[1, η, η^2, η^3]
-    ζarray = SA[1, ζ, ζ^2, ζ^3]
+    ηarray = (1.0, η, η^2, η^3)
+    ζarray = (1.0, ζ, ζ^2, ζ^3)
 
     f = 0.0
     for c = 1:4
@@ -135,8 +135,8 @@ function partial_derivative_x(tricubic::Tricubic, x, y, z)
     η = (y - tricubic.Yⱼ)/(tricubic.Yⱼ₊₁ - tricubic.Yⱼ)
     ζ = (z - tricubic.Zₖ)/(tricubic.Zₖ₊₁ - tricubic.Zₖ)
 
-    ξarray = SA[1, ξ, ξ^2]
-    ζarray = SA[1, ζ, ζ^2, ζ^3]
+    ξarray = (1.0, ξ, ξ^2)
+    ζarray = (1.0, ζ, ζ^2, ζ^3)
 
     ∂f∂x = 0.0
     for a = 2:4
@@ -162,8 +162,8 @@ function partial_derivative_y(tricubic::Tricubic, x, y, z)
     η = (y - tricubic.Yⱼ)/(tricubic.Yⱼ₊₁ - tricubic.Yⱼ)
     ζ = (z - tricubic.Zₖ)/(tricubic.Zₖ₊₁ - tricubic.Zₖ)
 
-    ηarray = SA[1, η, η^2]
-    ζarray = SA[1, ζ, ζ^2, ζ^3]
+    ηarray = (1.0, η, η^2)
+    ζarray = (1.0, ζ, ζ^2, ζ^3)
 
     ∂f∂y = 0.0
     for c = 2:4
@@ -189,8 +189,8 @@ function partial_derivative_z(tricubic::Tricubic, x, y, z)
     η = (y - tricubic.Yⱼ)/(tricubic.Yⱼ₊₁ - tricubic.Yⱼ)
     ζ = (z - tricubic.Zₖ)/(tricubic.Zₖ₊₁ - tricubic.Zₖ)
 
-    ηarray = SA[1, η, η^2, η^3]
-    ζarray = SA[1, ζ, ζ^2]
+    ηarray = (1.0, η, η^2, η^3)
+    ζarray = (1.0, ζ, ζ^2)
 
     ∂f∂z = 0.0
     for c = 1:4
